@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intrinsic Value Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12213B;
+    --paper:#F6F3EC;
+    --paper-raised:#FFFFFF;
+    --brass:#A9803D;
+    --brass-dark:#7C5E2C;
+    --rule:#D8D0BE;
+    --text:#20283A;
+    --text-muted:#5B6072;
+    --green:#1E6E45;
+    --red:#9A3A2E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    line-height:1.5;
+  }
+  .ledger-lines{
+    background-image: repeating-linear-gradient(to bottom, transparent, transparent 35px, var(--rule) 35px, var(--rule) 36px);
+  }
+  header{
+    background:var(--ink);
+    color:var(--paper);
+    padding:56px 24px 64px;
+    text-align:center;
+    position:relative;
+  }
+  header::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-1px;
+    height:6px;
+    background:linear-gradient(90deg, var(--brass), var(--brass-dark), var(--brass));
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:#C9B98C;
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:clamp(30px,5vw,46px);
+    margin:0 0 12px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    max-width:560px;
+    margin:0 auto;
+    color:#C7CCDA;
+    font-size:16px;
+  }
+  main{
+    max-width:880px;
+    margin:-40px auto 80px;
+    padding:0 20px;
+  }
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:4px;
+    box-shadow:0 18px 40px -24px rgba(18,33,59,0.35);
+    padding:32px;
+    margin-bottom:24px;
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 140px 160px;
+    gap:16px;
+    margin-bottom:8px;
+  }
+  @media (max-width:640px){
+    .field-row{ grid-template-columns:1fr; }
+  }
+  label{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin-bottom:6px;
+  }
+  input[type=text], input[type=number]{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--rule);
+    border-radius:3px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    background:#FBFAF6;
+    color:var(--text);
+  }
+  input:focus{
+    outline:2px solid var(--brass);
+    outline-offset:1px;
+    border-color:var(--brass);
+  }
+  .hint{
+    font-size:12px;
+    color:var(--text-muted);
+    margin:2px 0 18px;
+  }
+  button{
+    padding:15px 22px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:3px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button.primary{ width:100%; }
+  button.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--ink);
+  }
+  button:hover{ background:#1B2E52; color:var(--paper); }
+  button.secondary:hover{ background:var(--ink); }
+  button:disabled{ background:#9099AA; color:#fff; cursor:progress; border-color:#9099AA; }
+
+  #status{
+    margin-top:14px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    white-space:pre-wrap;
+    min-height:20px;
+  }
+  #status.err{ color:var(--red); }
+
+  #results{ display:none; }
+
+  .stock-name{
+    font-family:'Source Serif 4',serif;
+    font-size:24px;
+    font-weight:700;
+    margin:0;
+  }
+  .stock-sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--text-muted);
+    margin-top:4px;
+  }
+
+  .kv-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+    gap:18px;
+    margin-top:20px;
+  }
+  .kv-grid .kv label{ margin-bottom:4px; }
+  .kv-grid .kv .val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+  }
+  .kv-grid .kv .src{
+    font-size:11px;
+    color:var(--text-muted);
+    margin-top:2px;
+  }
+
+  .horizon-toggle{
+    display:flex;
+    gap:0;
+    margin-bottom:20px;
+    border:1px solid var(--ink);
+    border-radius:3px;
+    overflow:hidden;
+    width:fit-content;
+  }
+  .horizon-toggle button{
+    background:transparent;
+    color:var(--ink);
+    border:none;
+    border-radius:0;
+    padding:10px 20px;
+  }
+  .horizon-toggle button.active{
+    background:var(--ink);
+    color:var(--paper);
+  }
+
+  .verdict{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    padding:20px 0;
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    margin:20px 0;
+  }
+  .verdict .price{
+    font-family:'Source Serif 4',serif;
+    font-size:34px;
+    font-weight:700;
+  }
+  .verdict .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    padding:4px 10px;
+    border-radius:3px;
+  }
+  .tag.undervalued{ background:#E4F0E9; color:var(--green); }
+  .tag.overvalued{ background:#F3E4E1; color:var(--red); }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+  }
+  th,td{
+    text-align:right;
+    padding:8px 10px;
+    border-bottom:1px solid var(--rule);
+  }
+  th:first-child, td:first-child{ text-align:left; }
+  thead th{
+    color:var(--text-muted);
+    font-weight:500;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:.05em;
+  }
+
+  details{ margin-top:14px; }
+  summary{
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+  }
+  .table-wrap{ overflow-x:auto; margin-top:12px; }
+
+  .actions{
+    display:flex;
+    gap:12px;
+    margin-top:8px;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+    padding-bottom:40px;
+  }
+  footer a{ color:var(--brass-dark); }
+</style>
+</head>
+<body class="ledger-lines">
+  <header>
+    <div class="eyebrow">Discounted Cash Flow &middot; Free &amp; Live</div>
+    <h1>Intrinsic Value Calculator</h1>
+    <p>Type a ticker. See a 10-year and 20-year discounted cash flow valuation, computed live from Yahoo Finance data &mdash; right on this page.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="field-row">
+        <div>
+          <label for="ticker">Ticker / Symbol</label>
+          <input type="text" id="ticker" placeholder="e.g. AAPL, VMI, 0700.HK" autocomplete="off">
+        </div>
+        <div>
+          <label for="year">Year <span style="text-transform:none">(optional)</span></label>
+          <input type="number" id="year" placeholder="{{ default_year }}">
+        </div>
+        <div>
+          <label for="discount_rate">Discount Rate <span style="text-transform:none">(optional)</span></label>
+          <input type="number" step="0.001" id="discount_rate" placeholder="auto, e.g. 0.086">
+        </div>
+      </div>
+      <p class="hint">Leave Year and Discount Rate blank to auto-fill (current year; beta-derived discount rate).</p>
+
+      <button class="primary" id="analyzeBtn">Analyze</button>
+      <div id="status"></div>
+    </div>
+
+    <div id="results">
+      <div class="card">
+        <h2 class="stock-name" id="r-name"></h2>
+        <div class="stock-sub" id="r-sub"></div>
+
+        <div class="kv-grid">
+          <div class="kv"><label>Free Cash Flow (Current)</label><div class="val" id="r-fcf"></div><div class="src" id="r-fcf-src"></div></div>
+          <div class="kv"><label>Total Debt</label><div class="val" id="r-debt"></div></div>
+          <div class="kv"><label>Cash &amp; ST Investments</label><div class="val" id="r-cash"></div></div>
+          <div class="kv"><label>Shares Outstanding</label><div class="val" id="r-shares"></div></div>
+          <div class="kv"><label>Growth Yr 1&ndash;5</label><div class="val" id="r-g1"></div></div>
+          <div class="kv"><label>Growth Yr 6&ndash;10</label><div class="val" id="r-g2"></div></div>
+          <div class="kv"><label>Growth Yr 11&ndash;20</label><div class="val" id="r-g3"></div></div>
+          <div class="kv"><label>Last Close</label><div class="val" id="r-close"></div></div>
+          <div class="kv"><label>Discount Rate</label><div class="val" id="r-dr"></div><div class="src" id="r-dr-src"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="horizon-toggle">
+          <button id="btn-20y" class="active">20-Year</button>
+          <button id="btn-10y">10-Year</button>
+        </div>
+
+        <div class="verdict">
+          <div class="price" id="r-final-iv"></div>
+          <div class="tag" id="r-tag"></div>
+        </div>
+
+        <div class="kv-grid">
+          <div class="kv"><label>PV of Free Cash Flow</label><div class="val" id="r-pv"></div></div>
+          <div class="kv"><label>Intrinsic Value before Cash/Debt</label><div class="val" id="r-iv-before"></div></div>
+          <div class="kv"><label>Less Debt / Share</label><div class="val" id="r-debt-share"></div></div>
+          <div class="kv"><label>Plus Cash / Share</label><div class="val" id="r-cash-share"></div></div>
+          <div class="kv"><label>Final IV / Share (Stock Ccy)</label><div class="val" id="r-final-iv-stock"></div></div>
+          <div class="kv"><label>(Discount) / Premium</label><div class="val" id="r-disc-prem"></div></div>
+        </div>
+
+        <details>
+          <summary>Show year-by-year Free Cash Flow projection</summary>
+          <div class="table-wrap">
+            <table id="r-table">
+              <thead><tr><th>Year</th><th>Projected FCF</th><th>Discount Factor</th><th>Discounted Value</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="downloadBtn">Download as Excel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family:'Source Serif 4',serif;font-size:20px;margin-top:0;">How the numbers are derived</h2>
+      <p style="color:var(--text-muted);font-size:14px;">
+        Free Cash Flow (Current) uses Free Cash Flow (last 4 quarters) if Operating Cash Flow exceeds
+        1.5&times; Net Income, otherwise Net Income (latest fiscal year). Growth Yr 1&ndash;5 comes from
+        analyst long-term estimates (falling back to historical EPS CAGR). Growth Yr 6&ndash;10 is the
+        lesser of 15% or half the Yr 1&ndash;5 rate. Growth Yr 11&ndash;20 is long-term GDP growth + 1%
+        (4.18% US, 7% China/HK). The discount rate is Risk Free Rate + Beta &times; Market Risk Premium.
+      </p>
+    </div>
+  </main>
+
+  <footer>
+    Uses free, delayed market data. Not investment advice. &middot; <a href="https://github.com" target="_blank" rel="noopener">View source on GitHub</a>
+  </footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let lastResult = null;
+  let currentHorizon = '20';
+
+  function fmtNum(x, decimals=2) {
+    if (x === null || x === undefined || Number.isNaN(x)) return '—';
+    return Number(x).toLocaleString(undefined, {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+  }
+  function fmtPct(x, decimals=1) {
+    if (x === null || x === undefined || Number.isNaN(x)) return '—';
+    return (Number(x) * 100).toLocaleString(undefined, {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + '%';
+  }
+  function fmtMoney(x, ccy) {
+    if (x === null || x === undefined || Number.isNaN(x)) return '—';
+    return (ccy || '') + ' ' + fmtNum(x, 2);
+  }
+
+  function renderHorizon(horizon) {
+    if (!lastResult) return;
+    currentHorizon = horizon;
+    $('btn-20y').classList.toggle('active', horizon === '20');
+    $('btn-10y').classList.toggle('active', horizon === '10');
+
+    const data = lastResult.data;
+    const result = horizon === '20' ? lastResult.result_20y : lastResult.result_10y;
+    const stockCcy = data.stock_currency_symbol;
+
+    $('r-final-iv').textContent = fmtMoney(result.final_iv_per_share_stock_ccy, stockCcy);
+    const dp = result.discount_premium;
+    const tag = $('r-tag');
+    if (dp === null || dp === undefined) {
+      tag.textContent = 'n/a';
+      tag.className = 'tag';
+    } else if (dp < 0) {
+      tag.textContent = `Trading ${fmtPct(Math.abs(dp))} below intrinsic value`;
+      tag.className = 'tag undervalued';
+    } else {
+      tag.textContent = `Trading ${fmtPct(dp)} above intrinsic value`;
+      tag.className = 'tag overvalued';
+    }
+
+    $('r-pv').textContent = fmtMoney(result.pv_of_fcf_m, data.stmt_currency_symbol) + 'm';
+    $('r-iv-before').textContent = fmtMoney(result.iv_before_cash_debt, data.stmt_currency_symbol);
+    $('r-debt-share').textContent = fmtMoney(result.debt_per_share, data.stmt_currency_symbol);
+    $('r-cash-share').textContent = fmtMoney(result.cash_per_share, data.stmt_currency_symbol);
+    $('r-final-iv-stock').textContent = fmtMoney(result.final_iv_per_share_stock_ccy, stockCcy);
+    $('r-disc-prem').textContent = dp === null || dp === undefined ? '—' : fmtPct(dp);
+
+    const tbody = document.querySelector('#r-table tbody');
+    tbody.innerHTML = '';
+    result.rows.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${row.year}</td><td>${fmtNum(row.fcf_m)}</td><td>${fmtNum(row.discount_factor, 4)}</td><td>${fmtNum(row.discounted_value_m)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderResult(result) {
+    lastResult = result;
+    const data = result.data;
+
+    $('r-name').textContent = data.name;
+    $('r-sub').textContent = `${data.ticker} · Method: ${data.method} · Current Year: ${result.year}`;
+
+    $('r-fcf').textContent = fmtMoney(data.fcf_current_value_m, data.stmt_currency_symbol) + 'm';
+    $('r-fcf-src').textContent = data.rule_note;
+    $('r-debt').textContent = fmtMoney(data.total_debt_m, data.stmt_currency_symbol) + 'm';
+    $('r-cash').textContent = fmtMoney(data.cash_sti_m, data.stmt_currency_symbol) + 'm';
+    $('r-shares').textContent = fmtNum(data.shares_out_m, 1) + 'm';
+    $('r-g1').textContent = fmtPct(data.growth_yr1_5);
+    $('r-g2').textContent = fmtPct(data.growth_yr6_10);
+    $('r-g3').textContent = fmtPct(data.growth_yr11_20);
+    $('r-close').textContent = fmtMoney(data.last_close, data.stock_currency_symbol);
+    $('r-dr').textContent = fmtPct(data.discount_rate);
+    $('r-dr-src').textContent = data.discount_rate_source;
+
+    $('results').style.display = 'block';
+    renderHorizon(currentHorizon);
+  }
+
+  $('btn-20y').addEventListener('click', () => renderHorizon('20'));
+  $('btn-10y').addEventListener('click', () => renderHorizon('10'));
+
+  $('analyzeBtn').addEventListener('click', async () => {
+    const ticker = $('ticker').value.trim();
+    const year = $('year').value.trim();
+    const discountRate = $('discount_rate').value.trim();
+    const statusEl = $('status');
+    statusEl.className = '';
+    statusEl.textContent = '';
+
+    if (!ticker) {
+      statusEl.className = 'err';
+      statusEl.textContent = 'Please enter a ticker symbol.';
+      return;
+    }
+
+    $('analyzeBtn').disabled = true;
+    $('results').style.display = 'none';
+    statusEl.textContent = `Fetching data for ${ticker.toUpperCase()}...`;
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ticker, year: year || null, discount_rate: discountRate || null}),
+      });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error || `Request failed (${res.status})`);
+
+      statusEl.textContent = '';
+      renderResult(payload);
+    } catch (err) {
+      statusEl.className = 'err';
+      statusEl.textContent = `Error: ${err.message}`;
+    } finally {
+      $('analyzeBtn').disabled = false;
+    }
+  });
+
+  $('downloadBtn').addEventListener('click', async () => {
+    if (!lastResult) return;
+    const ticker = lastResult.data.ticker;
+    const year = lastResult.year;
+    const discountRate = lastResult.data.discount_rate;
+    const statusEl = $('status');
+
+    $('downloadBtn').disabled = true;
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ticker, year, discount_rate: discountRate}),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      const filename = match ? match[1] : `${ticker}_Intrinsic_Value.xlsx`;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      statusEl.className = 'err';
+      statusEl.textContent = `Error: ${err.message}`;
+    } finally {
+      $('downloadBtn').disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
