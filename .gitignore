@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-*_Intrinsic_Value.xlsx
-.venv/
-venv/
-.DS_Store
-*.log
