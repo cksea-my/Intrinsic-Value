@@ -1,0 +1,1 @@
+document.querySelectorAll('.sheet-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.sheet-tab,.sheet-panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.target).classList.add('active');}));

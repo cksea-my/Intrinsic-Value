@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="welcome"><h2>Loading {{ active }} analysis…</h2><p>Select a ticker above.</p><script>location.replace("{{ url_for('stock',ticker=active) }}")</script></section>{% endblock %}
